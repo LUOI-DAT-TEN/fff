@@ -15,6 +15,18 @@
             background-color: #000;
             font-family: Arial, sans-serif;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .header {
@@ -48,6 +60,36 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             max-width: 900px;
+            width: 100%;
+        }
+
+        /* Responsive cho tablet */
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .product-card {
+                padding: 20px;
+            }
+        }
+
+        /* Responsive cho mobile */
+        @media (max-width: 480px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .header {
+                font-size: 16px;
+                padding: 12px 20px;
+            }
+            
+            .stats {
+                gap: 20px;
+            }
         }
 
         .product-card {
@@ -103,24 +145,60 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">đã bán:</span>
-                <span class="stat-value" id="totalSold">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">tổng:</span>
-                <span class="stat-value" id="totalRevenue">0</span>
+    <div class="container">
+        <div class="header">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">đã bán:</span>
+                    <span class="stat-value" id="totalSold">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">tổng:</span>
+                    <span class="stat-value" id="totalRevenue">0</span>
+                </div>
             </div>
         </div>
+
+        <div class="products-grid" id="productsGrid"></div>
+
+        <p class="click-hint">💡 Nhấn vào món hàng để tăng số lượng đã bán<br>📱 Thông báo sẽ được gửi qua Telegram (cần cấu hình Bot Token & Chat ID)</p>
     </div>
 
-    <div class="products-grid" id="productsGrid"></div>
-
-    <p class="click-hint">💡 Nhấn vào món hàng để tăng số lượng đã bán</p>
-
     <script>
+        // Cấu hình Telegram Bot
+        const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; // Thay bằng token bot của bạn
+        const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';     // Thay bằng chat ID của bạn
+
+        // Hàm gửi tin nhắn qua Telegram
+        async function sendTelegramMessage(product) {
+            const colors = ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣'];
+            const message = product.id + colors[product.id - 1];
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Đã gửi thông báo Telegram');
+                } else {
+                    console.error('❌ Lỗi gửi Telegram:', await response.text());
+                }
+            } catch (error) {
+                console.error('❌ Lỗi kết nối Telegram:', error);
+            }
+        }
+
         // Dữ liệu sản phẩm
         const products = [
             { id: 1, name: 'món 1', price: 50000, sold: 0 },
@@ -169,6 +247,9 @@
                 card.querySelector('.product-sold').textContent = product.sold;
                 card.querySelector('.product-revenue').textContent = formatMoney(product.price * product.sold);
                 updateStats();
+                
+                // Gửi thông báo qua Telegram
+                sendTelegramMessage(product);
             });
             
             return card;
