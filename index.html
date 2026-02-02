@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Bán Hàng</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #f0f0f0;
+            border-radius: 25px;
+            padding: 15px 30px;
+            display: inline-block;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            font-weight: normal;
+        }
+
+        .stat-label {
+            font-weight: normal;
+        }
+
+        .stat-value {
+            font-weight: bold;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 900px;
+        }
+
+        .product-card {
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+            background-color: #fff;
+        }
+
+        .product-card:active {
+            transform: translateY(0);
+        }
+
+        .product-name {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+
+        .product-price {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .product-sold {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .product-revenue {
+            font-size: 18px;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .click-hint {
+            text-align: center;
+            color: #888;
+            margin-top: 30px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">đã bán:</span>
+                <span class="stat-value" id="totalSold">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">tổng:</span>
+                <span class="stat-value" id="totalRevenue">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="products-grid" id="productsGrid"></div>
+
+    <p class="click-hint">💡 Nhấn vào món hàng để tăng số lượng đã bán</p>
+
+    <script>
+        // Dữ liệu sản phẩm
+        const products = [
+            { id: 1, name: 'món 1', price: 50000, sold: 0 },
+            { id: 2, name: 'món 2', price: 75000, sold: 0 },
+            { id: 3, name: 'món 3', price: 60000, sold: 0 },
+            { id: 4, name: 'món 4', price: 45000, sold: 0 },
+            { id: 5, name: 'món 5', price: 80000, sold: 0 },
+            { id: 6, name: 'món 6', price: 55000, sold: 0 }
+        ];
+
+        // Hàm format số tiền
+        function formatMoney(amount) {
+            return amount.toLocaleString('vi-VN') + 'đ';
+        }
+
+        // Hàm tính tổng số lượng đã bán
+        function getTotalSold() {
+            return products.reduce((total, product) => total + product.sold, 0);
+        }
+
+        // Hàm tính tổng doanh thu
+        function getTotalRevenue() {
+            return products.reduce((total, product) => total + (product.price * product.sold), 0);
+        }
+
+        // Hàm cập nhật thống kê
+        function updateStats() {
+            document.getElementById('totalSold').textContent = getTotalSold();
+            document.getElementById('totalRevenue').textContent = formatMoney(getTotalRevenue());
+        }
+
+        // Hàm tạo thẻ sản phẩm
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <div class="product-name">${product.name}</div>
+                <div class="product-price">${formatMoney(product.price)}</div>
+                <div class="product-sold">${product.sold}</div>
+                <div class="product-revenue">${formatMoney(product.price * product.sold)}</div>
+            `;
+            
+            // Xử lý sự kiện click
+            card.addEventListener('click', () => {
+                product.sold += 1;
+                card.querySelector('.product-sold').textContent = product.sold;
+                card.querySelector('.product-revenue').textContent = formatMoney(product.price * product.sold);
+                updateStats();
+            });
+            
+            return card;
+        }
+
+        // Khởi tạo trang
+        function init() {
+            const grid = document.getElementById('productsGrid');
+            products.forEach(product => {
+                grid.appendChild(createProductCard(product));
+            });
+            updateStats();
+        }
+
+        // Chạy khi trang load xong
+        init();
+    </script>
+</body>
+</html>
