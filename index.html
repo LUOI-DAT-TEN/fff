@@ -160,6 +160,8 @@
         </div>
 
         <div class="products-grid" id="productsGrid"></div>
+
+        <p class="click-hint">💡 Nhấn vào món hàng để tăng số lượng đã bán<br>📱 Thông báo sẽ được gửi qua Telegram (cần cấu hình Bot Token & Chat ID)</p>
     </div>
 
     <script>
@@ -169,7 +171,7 @@
 
         // Hàm gửi tin nhắn qua Telegram
         async function sendTelegramMessage(product) {
-            const colors = ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣'];
+            const colors = ['🔴', '🟠', '🟡'];
             const message = product.id + colors[product.id - 1];
 
             const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -197,14 +199,51 @@
             }
         }
 
+        // Hàm gửi báo cáo tổng hợp
+        async function sendReportToTelegram() {
+            let reportMessage = '📊 BÁO CÁO DOANH THU\n\n';
+            reportMessage += `💰 Tổng doanh thu: ${formatMoney(getTotalRevenue())}\n`;
+            reportMessage += `📦 Tổng đã bán: ${getTotalSold()} món\n\n`;
+            reportMessage += '━━━━━━━━━━━━━━━━\n';
+            
+            products.forEach((product, index) => {
+                const colors = ['🔴', '🟠', '🟡'];
+                const revenue = product.price * product.sold;
+                reportMessage += `${colors[index]} ${product.name}\n`;
+                reportMessage += `   Số lượng: ${product.sold}\n`;
+                reportMessage += `   Doanh thu: ${formatMoney(revenue)}\n\n`;
+            });
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: reportMessage,
+                        parse_mode: 'HTML'
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Đã gửi báo cáo Telegram');
+                } else {
+                    console.error('❌ Lỗi gửi báo cáo:', await response.text());
+                }
+            } catch (error) {
+                console.error('❌ Lỗi kết nối Telegram:', error);
+            }
+        }
+
         // Dữ liệu sản phẩm
         const products = [
             { id: 1, name: 'món 1', price: 50000, sold: 0 },
             { id: 2, name: 'món 2', price: 75000, sold: 0 },
-            { id: 3, name: 'món 3', price: 60000, sold: 0 },
-            { id: 4, name: 'món 4', price: 45000, sold: 0 },
-            { id: 5, name: 'món 5', price: 80000, sold: 0 },
-            { id: 6, name: 'món 6', price: 55000, sold: 0 }
+            { id: 3, name: 'món 3', price: 60000, sold: 0 }
         ];
 
         // Hàm format số tiền
@@ -264,6 +303,25 @@
 
         // Chạy khi trang load xong
         init();
+        
+        // Thiết lập timer 15 phút (900 giây)
+        setTimeout(() => {
+            sendReportToTelegram();
+        }, 900000); // 900000ms = 15 phút
+
+        // Gửi báo cáo khi người dùng thoát trang hoặc tải lại
+        window.addEventListener('beforeunload', () => {
+            sendReportToTelegram();
+        });
+
+        // Gửi báo cáo khi trang bị ẩn (chuyển tab, minimize)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                sendReportToTelegram();
+            }
+        });
+
+        console.log('⏰ Đã bật báo cáo tự động sau 15 phút');
     </script>
 </body>
 </html>
