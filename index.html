@@ -41,6 +41,8 @@
         .stats {
             display: flex;
             gap: 30px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .stat-item {
@@ -53,6 +55,34 @@
 
         .stat-value {
             font-weight: bold;
+        }
+
+        .report-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 10px 20px;
+            margin-left: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .report-btn:hover {
+            background-color: #229954;
+            transform: scale(1.05);
+        }
+
+        .report-btn:active {
+            transform: scale(0.95);
+        }
+
+        .report-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: scale(1);
         }
 
         .products-grid {
@@ -88,7 +118,16 @@
             }
             
             .stats {
-                gap: 15px;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            .report-btn {
+                width: 100%;
+                margin-left: 0 !important;
+                margin-top: 10px;
+                font-size: 14px;
+                padding: 8px 15px;
             }
             
             .product-card {
@@ -233,6 +272,7 @@
                     <span class="stat-label">tổng:</span>
                     <span class="stat-value" id="totalRevenue">0</span>
                 </div>
+                <button class="report-btn" id="reportBtn">📊 Gửi báo cáo</button>
             </div>
         </div>
 
@@ -339,25 +379,52 @@
             console.log('⏱️ Timer báo cáo đã được khởi động (10 phút)');
         }
 
-        // Lắng nghe sự kiện thoát trang hoặc tải lại - PHẦN ĐÃ SỬA
-        window.addEventListener('beforeunload', (event) => {
-            const message = createSummaryMessage();
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            
-            // Sử dụng XMLHttpRequest đồng bộ để đảm bảo gửi được trước khi trang đóng
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', url, false); // false = đồng bộ
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            try {
-                xhr.send(JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: message,
-                }));
-                console.log('📤 Đã gửi báo cáo khi thoát/tải lại trang');
-            } catch (error) {
-                console.error('❌ Lỗi gửi báo cáo khi đóng trang:', error);
+        // Lưu dữ liệu vào localStorage liên tục
+        function saveToLocalStorage() {
+            const data = {
+                products: products.map(p => ({ id: p.id, sold: p.sold })),
+                timestamp: Date.now()
+            };
+            localStorage.setItem('salesData', JSON.stringify(data));
+        }
+
+        // Gửi báo cáo khi trang bị ẩn (đóng hoặc chuyển tab)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                saveToLocalStorage();
+                sendSummaryReport();
+                console.log('📤 Trang bị ẩn - đã gửi báo cáo');
             }
         });
+
+        // Backup: gửi khi trang bị unload (cho iOS Safari)
+        window.addEventListener('pagehide', (event) => {
+            saveToLocalStorage();
+            sendSummaryReport();
+            console.log('📤 Trang pagehide - đã gửi báo cáo');
+        });
+
+        // Khôi phục dữ liệu khi tải lại trang
+        function restoreFromLocalStorage() {
+            const savedData = localStorage.getItem('salesData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    // Chỉ khôi phục nếu dữ liệu không quá cũ (trong vòng 1 giờ)
+                    if (Date.now() - data.timestamp < 3600000) {
+                        data.products.forEach(saved => {
+                            const product = products.find(p => p.id === saved.id);
+                            if (product) {
+                                product.sold = saved.sold;
+                            }
+                        });
+                        console.log('✅ Đã khôi phục dữ liệu từ localStorage');
+                    }
+                } catch (error) {
+                    console.error('Lỗi khôi phục dữ liệu:', error);
+                }
+            }
+        }
 
         // Hàm tạo thẻ sản phẩm
         function createProductCard(product) {
@@ -383,6 +450,9 @@
 
         // Khởi tạo trang
         function init() {
+            // Khôi phục dữ liệu từ localStorage nếu có
+            restoreFromLocalStorage();
+            
             const grid = document.getElementById('productsGrid');
             products.forEach(product => {
                 grid.appendChild(createProductCard(product));
@@ -391,6 +461,24 @@
             
             // Khởi động timer báo cáo
             startReportTimer();
+            
+            // Lưu dữ liệu mỗi khi có thay đổi
+            setInterval(saveToLocalStorage, 5000); // Lưu mỗi 5 giây
+            
+            // Xử lý nút gửi báo cáo thủ công
+            document.getElementById('reportBtn').addEventListener('click', async () => {
+                const btn = document.getElementById('reportBtn');
+                btn.textContent = '⏳ Đang gửi...';
+                btn.disabled = true;
+                
+                await sendSummaryReport();
+                
+                btn.textContent = '✅ Đã gửi!';
+                setTimeout(() => {
+                    btn.textContent = '📊 Gửi báo cáo';
+                    btn.disabled = false;
+                }, 2000);
+            });
         }
 
         // Chạy khi trang load xong
