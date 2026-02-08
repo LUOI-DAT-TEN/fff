@@ -231,11 +231,12 @@
         const products = [
             { id: 1, name: 'trà tắc', price: 15000, sold: 0 },
             { id: 2, name: 'bánh tráng', price: 20000, sold: 0 },
-            { id: 3, name: 'tà hủ', price: 10000, sold: 0 },
+            { id: 3, name: 'tàu hủ', price: 10000, sold: 0 },
             { id: 4, name: 'trân trâu', price: 5000, sold: 0 },
             { id: 5, name: 'combo an đình+bảo an', price: 30000, sold: 0 },
             { id: 6, name: 'combo lu xì', price: 40000, sold: 0 }
         ];
+
         // Hàm format số tiền
         function formatMoney(amount) {
             return amount.toLocaleString('vi-VN') + 'đ';
@@ -248,8 +249,8 @@
 
         // Hàm tính tổng doanh thu
         function getTotalRevenue() {
-            return products.reduce((total, product)
-        
+            return products.reduce((total, product) => total + (product.price * product.sold), 0);
+        }
 
         // Hàm cập nhật thống kê
         function updateStats() {
