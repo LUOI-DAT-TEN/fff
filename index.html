@@ -75,20 +75,97 @@
             }
         }
 
-        /* Responsive cho mobile */
-        @media (max-width: 480px) {
+        /* Responsive cho mobile - chế độ dọc */
+        @media (max-width: 480px) and (orientation: portrait) {
             .products-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
             }
             
             .header {
-                font-size: 16px;
-                padding: 12px 20px;
+                font-size: 14px;
+                padding: 10px 20px;
             }
             
             .stats {
-                gap: 20px;
+                gap: 15px;
+            }
+            
+            .product-card {
+                padding: 15px;
+            }
+            
+            .product-name {
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+            
+            .product-price {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            
+            .product-sold {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            
+            .product-revenue {
+                font-size: 14px;
+            }
+        }
+
+        /* Responsive cho mobile - chế độ ngang */
+        @media (max-width: 900px) and (orientation: landscape) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                max-width: 100%;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            
+            .header {
+                font-size: 14px;
+                padding: 8px 16px;
+                margin-bottom: 15px;
+            }
+            
+            .stats {
+                gap: 15px;
+            }
+            
+            .product-card {
+                padding: 12px;
+            }
+            
+            .product-name {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            
+            .product-price {
+                font-size: 14px;
+                margin-bottom: 6px;
+            }
+            
+            .product-sold {
+                font-size: 14px;
+                margin-bottom: 6px;
+            }
+            
+            .product-revenue {
+                font-size: 13px;
+            }
+            
+            .click-hint {
+                font-size: 12px;
+                margin-top: 15px;
             }
         }
 
@@ -164,84 +241,21 @@
 
     <script>
         // Cấu hình Telegram Bot
-        const TELEGRAM_BOT_TOKEN = '7954299803:AAE1QSkQcEa6GPkTm5Su0X_j4Bft8TAhLu0'; // Thay bằng token bot của bạn
-        const TELEGRAM_CHAT_ID = '8054440859';     // Thay bằng chat ID của bạn
+        const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; // Thay bằng token bot của bạn
+        const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';     // Thay bằng chat ID của bạn
 
-        // Hàm gửi tin nhắn qua Telegram
-        async function sendTelegramMessage(product) {
-            const colors = ['🔴', '🟠', '🟡'];
-            const message = product.id + colors[product.id - 1];
-
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: message,
-                        parse_mode: 'HTML'
-                    })
-                });
-                
-                if (response.ok) {
-                    console.log('✅ Đã gửi thông báo Telegram');
-                } else {
-                    console.error('❌ Lỗi gửi Telegram:', await response.text());
-                }
-            } catch (error) {
-                console.error('❌ Lỗi kết nối Telegram:', error);
-            }
-        }
-
-        // Hàm gửi báo cáo tổng hợp
-        async function sendReportToTelegram() {
-            let reportMessage = '📊 BÁO CÁO DOANH THU\n\n';
-            reportMessage += `💰 Tổng doanh thu: ${formatMoney(getTotalRevenue())}\n`;
-            reportMessage += `📦 Tổng đã bán: ${getTotalSold()} món\n\n`;
-            reportMessage += '━━━━━━━━━━━━━━━━\n';
-            
-            products.forEach((product, index) => {
-                const colors = ['🔴', '🟠', '🟡'];
-                const revenue = product.price * product.sold;
-                reportMessage += `${colors[index]} ${product.name}\n`;
-                reportMessage += `   Số lượng: ${product.sold}\n`;
-                reportMessage += `   Doanh thu: ${formatMoney(revenue)}\n\n`;
-            });
-
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: reportMessage,
-                        parse_mode: 'HTML'
-                    })
-                });
-                
-                if (response.ok) {
-                    console.log('✅ Đã gửi báo cáo Telegram');
-                } else {
-                    console.error('❌ Lỗi gửi báo cáo:', await response.text());
-                }
-            } catch (error) {
-                console.error('❌ Lỗi kết nối Telegram:', error);
-            }
-        }
+        // Biến đếm thời gian
+        let reportTimer;
+        const REPORT_INTERVAL = 900000; // 15 phút = 900,000 ms
 
         // Dữ liệu sản phẩm
         const products = [
-            { id: 1, name: ' bánh tráng ', price: 15000, sold: 0 },
-            { id: 2, name: ' trà', price: 10000, sold: 0 },
-            { id: 3, name: ' tàu hủ ', price: 5000, sold: 0 }
+            { id: 1, name: 'trà tắc', price: 15000, sold: 0 },
+            { id: 2, name: 'bánh tráng', price: 20000, sold: 0 },
+            { id: 3, name: 'tàu hủ', price: 10000, sold: 0 },
+            { id: 4, name: 'trân trâu', price: 5000, sold: 0 },
+            { id: 5, name: 'combo (an đình+bảo an)', price: 30000, sold: 0 },
+            { id: 6, name: 'combo xu lì', price: 40000, sold: 0 }
         ];
 
         // Hàm format số tiền
@@ -265,6 +279,81 @@
             document.getElementById('totalRevenue').textContent = formatMoney(getTotalRevenue());
         }
 
+        // Hàm tạo nội dung báo cáo
+        function createSummaryMessage() {
+            let message = '📊 BÁO CÁO DOANH THU\n\n';
+            message += `💰 Tổng doanh thu: ${formatMoney(getTotalRevenue())}\n`;
+            message += `📦 Tổng đã bán: ${getTotalSold()} món\n\n`;
+            message += '━━━━━━━━━━━━━━━━\n\n';
+            
+            products.forEach(product => {
+                const revenue = product.price * product.sold;
+                message += `${product.name}:\n`;
+                message += `  • Số lượng: ${product.sold}\n`;
+                message += `  • Doanh thu: ${formatMoney(revenue)}\n\n`;
+            });
+            
+            return message;
+        }
+
+        // Hàm gửi báo cáo tổng hợp qua Telegram
+        async function sendSummaryReport() {
+            const message = createSummaryMessage();
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: message
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Đã gửi báo cáo Telegram');
+                } else {
+                    console.error('❌ Lỗi gửi Telegram:', await response.text());
+                }
+            } catch (error) {
+                console.error('❌ Lỗi kết nối Telegram:', error);
+            }
+        }
+
+        // Hàm khởi động timer
+        function startReportTimer() {
+            // Xóa timer cũ nếu có
+            if (reportTimer) {
+                clearTimeout(reportTimer);
+            }
+            
+            // Đặt timer mới - gửi báo cáo sau 15 phút
+            reportTimer = setTimeout(() => {
+                sendSummaryReport();
+                startReportTimer(); // Đặt lại timer cho lần tiếp theo
+            }, REPORT_INTERVAL);
+            
+            console.log('⏱️ Timer báo cáo đã được khởi động (15 phút)');
+        }
+
+        // Lắng nghe sự kiện thoát trang hoặc tải lại
+        window.addEventListener('beforeunload', (event) => {
+            // Gửi báo cáo bằng sendBeacon (không chờ response)
+            const message = {
+                chat_id: TELEGRAM_CHAT_ID,
+                text: createSummaryMessage()
+            };
+            
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            const blob = new Blob([JSON.stringify(message)], { type: 'application/json' });
+            navigator.sendBeacon(url, blob);
+            
+            console.log('📤 Đã gửi báo cáo khi thoát/tải lại trang');
+        });
+
         // Hàm tạo thẻ sản phẩm
         function createProductCard(product) {
             const card = document.createElement('div');
@@ -276,15 +365,12 @@
                 <div class="product-revenue">${formatMoney(product.price * product.sold)}</div>
             `;
             
-            // Xử lý sự kiện click
+            // Xử lý sự kiện click - CHỈ cập nhật giao diện, KHÔNG gửi tin nhắn
             card.addEventListener('click', () => {
                 product.sold += 1;
                 card.querySelector('.product-sold').textContent = product.sold;
                 card.querySelector('.product-revenue').textContent = formatMoney(product.price * product.sold);
                 updateStats();
-                
-                // Gửi thông báo qua Telegram
-                sendTelegramMessage(product);
             });
             
             return card;
@@ -297,29 +383,13 @@
                 grid.appendChild(createProductCard(product));
             });
             updateStats();
+            
+            // Khởi động timer báo cáo
+            startReportTimer();
         }
 
         // Chạy khi trang load xong
         init();
-        
-        // Thiết lập timer 15 phút (900 giây)
-        setTimeout(() => {
-            sendReportToTelegram();
-        }, 900000); // 900000ms = 15 phút
-
-        // Gửi báo cáo khi người dùng thoát trang hoặc tải lại
-        window.addEventListener('beforeunload', () => {
-            sendReportToTelegram();
-        });
-
-        // Gửi báo cáo khi trang bị ẩn (chuyển tab, minimize)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                sendReportToTelegram();
-            }
-        });
-
-        console.log('⏰ Đã bật báo cáo tự động sau 15 phút');
     </script>
 </body>
 </html>
