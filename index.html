@@ -215,7 +215,7 @@
 
         <div class="products-grid" id="productsGrid"></div>
 
-        <p class="click-hint">LĐT<br>12D2</p>
+        <p class="click-hint">LĐT<br> 12D2</p>
     </div>
 
     <script>
@@ -236,7 +236,6 @@
             { id: 5, name: 'combo an đình+bảo an', price: 30000, sold: 0 },
             { id: 6, name: 'combo lu xì', price: 40000, sold: 0 }
         ];
-
         // Hàm format số tiền
         function formatMoney(amount) {
             return amount.toLocaleString('vi-VN') + 'đ';
@@ -249,8 +248,8 @@
 
         // Hàm tính tổng doanh thu
         function getTotalRevenue() {
-            return products.reduce((total, product) => total + (product.price * product.sold), 0);
-        }
+            return products.reduce((total, product)
+        
 
         // Hàm cập nhật thống kê
         function updateStats() {
@@ -373,7 +372,7 @@
 
         // Gửi báo cáo khi người dùng thoát hoặc reload trang
         window.addEventListener('beforeunload', (event) => {
-            // Gửi báo cáo (sử dụng sendBeacon để đảm bảo gửi được ngay cả khi trang đóng)
+            // Gửi báo cáo bằng XMLHttpRequest đồng bộ
             const message = (() => {
                 let msg = '📊 BÁO CÁO BÁN HÀNG (Đóng trang)\n\n';
                 msg += `💰 Tổng doanh thu: ${formatMoney(getTotalRevenue())}\n`;
@@ -390,13 +389,19 @@
             })();
 
             const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            const data = JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: message,
-            });
-
-            // Sử dụng sendBeacon để gửi ngay cả khi trang đang đóng
-            navigator.sendBeacon(url, new Blob([data], { type: 'application/json' }));
+            
+            // Sử dụng XMLHttpRequest đồng bộ để đảm bảo gửi được trước khi trang đóng
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, false); // false = đồng bộ
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            try {
+                xhr.send(JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                }));
+            } catch (error) {
+                console.error('Lỗi gửi báo cáo khi đóng trang:', error);
+            }
         });
 
         // Chạy khi trang load xong
